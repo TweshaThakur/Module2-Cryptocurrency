@@ -184,7 +184,7 @@ def replace_chain():
         response={'message':'The nodes had different chains so the chain was replaced by longest one:-)',
                   'new_chain': blockchain.chain}
     else:
-        response={'message': 'All good the chian is largest one',
+        response={'message': 'All good the chain is largest one.',
                   'actual_chain' : blockchain.chain}
     return jsonify(response), 200
         
