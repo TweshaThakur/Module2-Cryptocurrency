@@ -32,7 +32,7 @@ class Blockchain:
                'proof':proof,
                'previous_hash': previous_hash,
                'transactions': self.transactions}
-        self.tranactions=[]
+        self.transactions=[]
         self.chain.append(block)
         return block
     
@@ -65,7 +65,7 @@ class Blockchain:
                 return False
             previous_proof=previous_block['proof']
             proof=block['proof']
-            hash_operation=hashlib.sha256(str(proof**2-previous_proof**2).encode()).hexidigest()
+            hash_operation=hashlib.sha256(str(proof**2-previous_proof**2).encode()).hexdigest()
             if hash_operation[:4]!='0000':
                 return False
             previous_block =block
