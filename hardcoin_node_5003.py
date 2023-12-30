@@ -22,7 +22,7 @@ class Blockchain:
     
     def __init__(self):
         self.chain=[]
-        self.tranactions=[]
+        self.transactions=[]
         self.create_block(proof=1, previous_hash='0') #genesis block 
         self.nodes = set()
     
