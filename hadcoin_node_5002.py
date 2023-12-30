@@ -169,7 +169,7 @@ def connect_node():
     json = request.get_json()
     nodes = json.get('nodes')
     if nodes is None:
-        return "No node", 401
+        return "No node", 400
     for node in nodes:
         blockchain.add_node(node)
     response = {'message': 'All the nodes are connected. The Hardcoin blockchain now has following nodes.',
