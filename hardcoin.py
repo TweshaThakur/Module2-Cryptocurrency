@@ -99,6 +99,7 @@ class Blockchain:
         if longest_chain:
             self.chain = longest_chain
             return True
+        return False
     
 #part 2 mining blockchain
 #create a web app
@@ -147,9 +148,46 @@ def is_valid():
         response={'message': 'O Lord what went wrong! There is a problem. Blockchain is not Valid.'}
         
     return jsonify(response), 200
+
 #adding a new transaction to the blockchain
+@app.route('/add_transaction',methods=['POST'])
+def add_transaction():
+    json = request.get_json()
+    transaction_keys = ['sender','receiver','amount']
+    if not all (key in json for key in transaction_keys):
+        return 'Some elements of the transaction are missing', 400
+    index = blockchain.add_transaction(json['sender'],json['receiver'],json['amount'])
+    response = {'message': f'This transaction will be added to Block {index}'}
+    return jsonify(response), 201
 
 #part 3 - decentralising our blockchain
+
+#connecting new nodes
+@app.route('/connect_node',methods=['POST'])
+
+def connect_node():
+    json = request.get_json()
+    nodes = json.get('nodes')
+    if nodes is None:
+        return "No node", 401
+    for node in nodes:
+        blockchain.add_node(node)
+    response = {'message': 'All the nodes are connected. The Hardcoin blockchain now has following nodes.',
+                'total_nodes': list(blockchain.nodes)}
+    return jsonify(response),201
+
+#reolacing the chain by longest chaun if needed  
+@app.route('/replace_chain',methods=['GET'])
+def replace_chain():
+    is_chain_replaced = blockchain.replace_chain()
+    if is_chain_replaced:
+        response={'message':'The nodes had different chains so the chain was replaced by longest one:-)',
+                  'new_chain': blockchain.chain}
+    else:
+        response={'message': 'All good the chian is largest one',
+                  'actual_chain' : blockchain.chain}
+    return jsonify(response), 200
+        
 
 #running the app 
 app.run(host= '0.0.0.0', port = 5000)
