@@ -12,7 +12,7 @@ import datetime
 import hashlib
 import json
 from flask import Flask, jsonify, request
-from requests
+import requests
 from uuid import uuid4
 from urllib.parse import urlparse
 
@@ -22,13 +22,17 @@ class Blockchain:
     
     def __init__(self):
         self.chain=[]
+        self.tranactions=[]
         self.create_block(proof=1, previous_hash='0') #genesis block 
+        self.nodes = set()
     
     def create_block(self,proof,previous_hash):
         block={'index': len(self.chain)+1,
                'timestamp': str(datetime.datetime.now()),
                'proof':proof,
-               'previous_hash': previous_hash}
+               'previous_hash': previous_hash,
+               'transactions': self.tranactions}
+        self.tranactions=[]
         self.chain.append(block)
         return block
     
@@ -67,14 +71,46 @@ class Blockchain:
             previous_block =block
             block_index+=1
         return True
+    
+    def add_transaction(self, sender,receiver,amount):
+        self.transactions.append({'sender':sender,
+                                  'receiver':receiver,
+                                  'amount':amount})
+        previous_block=self.get_previous_block()
+        return previous_block['index']+1
         
+    
+    def add_node(self,address):
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+        
+    def replace_chain(self):
+        network = self.nodes
+        longest_chain= None
+        max_length = len(self.chain)
+        for node in network:
+            response = requests.get(f'http://{node}/get_chain')
+            if response.status_code==200:
+                length = response.json()['length']
+                chain = response.json() ['chain']
+                if length > max_length and self.is_chain_valid(chain) :
+                    max_length = length
+                    longest_chain = chain
+        if longest_chain:
+            self.chain = longest_chain
+            return True
     
 #part 2 mining blockchain
 #create a web app
 app=Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+#creating an address for the node on port 5000
+node_address = str(uuid4()).replace('-','')
+
 #creating blockchain
 blockchain =Blockchain()
+
 #minig a new block
 
 @app.route('/mine_block', methods=['GET'])
@@ -83,12 +119,14 @@ def mine_block():
     previous_proof= previous_block['proof']
     proof= blockchain.proof_of_work(previous_proof)
     previous_hash= blockchain.hash(previous_block)
+    blockchain.add_transaction(sender=node_address, receiver= 'John' , amount= 1)
     block= blockchain.create_block(proof, previous_hash)
     response= {'message':'Congratulations, you just mines a block!',
                'index':block['index'],
                'timestamp': block['timestamp'],
                'proof': block['proof'],
-               'previous_hash': block['previous_hash']}
+               'previous_hash': block['previous_hash'],
+               'transactions': block['transactions']}
     return jsonify(response), 200
 
 #getting the full blockchain
@@ -109,6 +147,7 @@ def is_valid():
         response={'message': 'O Lord what went wrong! There is a problem. Blockchain is not Valid.'}
         
     return jsonify(response), 200
+#adding a new transaction to the blockchain
 
 #part 3 - decentralising our blockchain
 
